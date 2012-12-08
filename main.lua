@@ -11,5 +11,4 @@ local ds1 = DiceSelect:new(display.contentCenterX, 100)
 --local ds2 = DiceSelect:new(display.contentCenterX, 600)
 
 local d1 = Dice:new("4d6")
-d1:out()
 d1:test()
