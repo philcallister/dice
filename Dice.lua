@@ -7,10 +7,19 @@ function Dice:new(notation)
     dice.notation = notation
     dice.pairs = {}
 
+    ----------------------------------------------------------------------
+    -- Random roll: bit of a kludge here as we accept the current roll
+    -- "num".  This is only used for testing.  For actual rolls, we only
+    -- create a random number from the given "sides" 
+    dice.random = function(num, sides)
+        return math.random (sides)
+    end
+
     --------------------------------------------------------------------------
     -- Parse the dice
     --------------------------------------------------------------------------
     function dice:parse()
+        print("dice:parse -------------------------")
 
         ----------------------------------------------------------------------
         -- Lexical Elements
@@ -49,7 +58,7 @@ function Dice:new(notation)
         ----------------------------------------------------------------------
         -- Add
         function add(v1, v2)
-            print("+++++", v1, v2)
+            print("+++++add", v1, v2)
 
             -- Keep Low or High
             if (v2 == "L") then
@@ -66,7 +75,7 @@ function Dice:new(notation)
         ----------------------------------------------------------------------
         -- Subtract
         function subtract(v1, v2)
-            print("-----", v1, v2)
+            print("-----subtract", v1, v2)
 
             -- Keep Low or High
             if (v2 == "L") then
@@ -83,16 +92,16 @@ function Dice:new(notation)
         ----------------------------------------------------------------------
         -- Keep
         function keepLow()
-            print("<<<<< keepLow")
             local m, i = min(dice.pairs[#dice.pairs].r)
             dice.pairs[#dice.pairs].r = {i}
+            print("<<<<<keepLow", m, i)
             return m
         end
 
         function keepHigh()
-            print(">>>>> keepHigh")
             local m, i = max(dice.pairs[#dice.pairs].r)
             dice.pairs[#dice.pairs].r = {i}
+            print(">>>>>keepHigh", m, i)
             return m
         end
 
@@ -133,10 +142,13 @@ function Dice:new(notation)
         ----------------------------------------------------------------------
         -- Roll the dice
         function roll(multiplier, sides)
+            print("roll:", multiplier, sides)
+
             local total = 0
             local rolls = {}
             for i = 1, multiplier do
-                rolls[i] = math.random (sides)
+                rolls[i] = dice.random(i, sides)
+                print("rrrrr", rolls[i])
                 total = total + rolls[i]
             end
             local pair = {
@@ -147,7 +159,7 @@ function Dice:new(notation)
             table.insert(dice.pairs, pair)
             return total
         end
-        
+
         return lpeg.match( G, dice.notation )
 
     end
@@ -156,15 +168,21 @@ function Dice:new(notation)
     -- Unit Testing
     --------------------------------------------------------------------------
     function dice:test()
-        dice.notation = "(3d6+H)+(3d6+L)"
-        local p = dice:parse()
-        print("ooooo ", p)
-        --print(">>>>> ", dice.pairs[1].m, dice.pairs[1].s, dice.pairs[1].r[1], dice.pairs[1].r[2], dice.pairs[1].r[3])
-        --print(">>>>> ", dice.pairs[2].m, dice.pairs[2].s, dice.pairs[2].r[1], dice.pairs[2].r[2])
-        --dice.notation = "3+5*9/(1+1) - 12"; assert(dice:parse() == 13.5, "error...test1") -- test1
-        --dice.notation = "10+10-10-10"; assert(dice:parse() == 0, "error...test2") -- test2
-        --dice.notation = "4d6"; assert(dice:parse() == 24, "error...test3") -- test3
-        --dice.notation = "2d10+10"; assert(dice:parse() == 30, "error...test4") -- test4
+
+        ----------------------------------------------------------------------
+        -- Random roll - nope...deterministic override for testing
+        dice.random = function(num, sides)
+            local random = 1
+            if (sides - num + 1 > 0) then
+                random = sides - num + 1
+            end
+            return random
+        end
+
+        ----------------------------------------------------------------------
+        -- Tests
+        v = 20; dice.notation = "1d20"; assert(dice:parse() == v, "{test #1} error: " .. v)
+        v = 9; dice.notation = "(3d6+H)+(4d6+L)"; assert(dice:parse() == v, "{test #2) error: " .. v)
     end
 
     return dice
