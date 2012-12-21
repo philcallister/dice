@@ -1,7 +1,15 @@
+------------------------------------------------------------------------------
+-- Dragon Dice
+-- Copyright (c) 2012 by Phil Callister. All Rights Reserved.
+--
+-- DiceSelect.lua => Enter dice in standard dice notation:
+--                   http://en.wikipedia.org/wiki/Dice_notation
+--
+local easingx = require("scripts.corona.easingx")
 local widget = require("widget")
-local easingx = require("easingx")
  
 DiceSelect = {}
+
 function DiceSelect:new(x, y)
 
     local diceSelect = display.newGroup()
@@ -14,6 +22,8 @@ function DiceSelect:new(x, y)
     diceSelect.diceButtons = {}
 
 
+    --------------------------------------------------------------------------
+    -- Select Dice button released.  Animate the open
     local releaseTextButton = function(event)
         diceSelect:remove(diceSelect.diceTextButton)
         diceSelect.selected = not diceSelect.selected
@@ -26,8 +36,11 @@ function DiceSelect:new(x, y)
             diceSelect.diceButtonsGroup.yScale = 0.2
             transition.to(diceSelect.diceButtonsGroup, { time = 1000, xScale = 1.0, yScale = 1.0, transition = easingx.easeOutElastic })
         end
+        return true
     end
 
+    --------------------------------------------------------------------------
+    -- Selected a button on the dice "calculator"
     local releaseDiceButton = function(event)
         if (string.len(diceSelect.diceValue) < 15 or event.target.id == "←") then
             local setLabel = true
@@ -57,11 +70,13 @@ function DiceSelect:new(x, y)
         end
     end
 
+    --------------------------------------------------------------------------
+    -- Create "Select Dice" button
     function diceSelect:newTextButton(label, selected, x, y)
         local button = widget.newButton
         {
-            default = selected and "dice-text-over.png" or "dice-text.png",
-            over = "dice-text-over.png",
+            default = selected and "images/dice-text-over.png" or "images/dice-text.png",
+            over = "images/dice-text-over.png",
             onRelease = releaseTextButton,
             label = label,
             labelColor = selected 
@@ -74,6 +89,8 @@ function DiceSelect:new(x, y)
         return button
     end
 
+    --------------------------------------------------------------------------
+    -- Create dice "calculator"
     function diceSelect:newDiceButtons(group, buttons, x, y)
         
         -- Big Buttons
@@ -86,11 +103,11 @@ function DiceSelect:new(x, y)
         for i = 1, 5 do
             for j = 1, 3 do
                 local label = bigButtons[count]
-                local useButton = "dice-button.png"
-                local useButtonOver = "dice-button-over.png"
+                local useButton = "images/dice-button.png"
+                local useButtonOver = "images/dice-button-over.png"
                 if (count == 12 or count == 15) then
-                    useButton = "dice-button-careful.png"
-                    useButtonOver = "dice-button-careful-over.png"
+                    useButton = "images/dice-button-careful.png"
+                    useButtonOver = "images/dice-button-careful-over.png"
                 end
                 buttons[count] = widget.newButton
                 {
@@ -116,8 +133,8 @@ function DiceSelect:new(x, y)
             buttons[count] = widget.newButton
             {
                 id = label,
-                default = "dice-button-small.png",
-                over = "dice-button-small-over.png",
+                default = "images/dice-button-small.png",
+                over = "images/dice-button-small-over.png",
                 onRelease = releaseDiceButton,
                 label = label,
                 labelColor = { default={ 255, 255, 255 }, over={ 217, 217, 217, 255 } }, 
@@ -130,6 +147,8 @@ function DiceSelect:new(x, y)
         end
     end
 
+    --------------------------------------------------------------------------
+    -- Retrieve dice notation
     function diceSelect:dice()
     end
 

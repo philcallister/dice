@@ -1,22 +1,30 @@
-local lpeg = require"lpeg"
+------------------------------------------------------------------------------
+-- Dragon Dice
+-- Copyright (c) 2012 by Phil Callister. All Rights Reserved.
+--
+-- DiceParser.lua => Parse dice given in standard dice notation:
+--                   http://en.wikipedia.org/wiki/Dice_notation
+--
+local lpeg = require("lpeg")
 
-local LOW = "L"
-local HIGH = "H"
+DiceParser = {}
+
+DiceParser.LOW = "L"
+DiceParser.HIGH = "H"
 
 ----------------------------------------------------------------------
 -- Lexical Elements
-local Space = lpeg.S(" \n\t")^0
-local Number = lpeg.C(lpeg.P"-"^-1 * lpeg.R("09")^1) * Space
-local Low = lpeg.C(lpeg.P(LOW)) * Space
-local High = lpeg.C(lpeg.P(HIGH)) * Space
-local FactorOp = lpeg.C(lpeg.S("+-")) * Space
-local TermOp = lpeg.C(lpeg.S("*/")) * Space
-local DiceOp = lpeg.C(lpeg.P("d")) * Space
-local Open = "(" * Space
-local Close = ")" * Space
+DiceParser.Space = lpeg.S(" \n\t")^0
+DiceParser.Number = lpeg.C(lpeg.P"-"^-1 * lpeg.R("09")^1) * DiceParser.Space
+DiceParser.Low = lpeg.C(lpeg.P(DiceParser.LOW)) * DiceParser.Space
+DiceParser.High = lpeg.C(lpeg.P(DiceParser.HIGH)) * DiceParser.Space
+DiceParser.FactorOp = lpeg.C(lpeg.S("+-")) * DiceParser.Space
+DiceParser.TermOp = lpeg.C(lpeg.S("*/")) * DiceParser.Space
+DiceParser.DiceOp = lpeg.C(lpeg.P("d")) * DiceParser.Space
+DiceParser.Open = "(" * DiceParser.Space
+DiceParser.Close = ")" * DiceParser.Space
 
-Dice = {}
-function Dice:new(notation)
+function DiceParser:new(notation)
 
     local dice = {}
     dice.notation = notation
@@ -44,9 +52,9 @@ function Dice:new(notation)
             print("+++++add", v1, v2)
 
             -- Keep Low or High
-            if (v2 == LOW) then
+            if (v2 == DiceParser.LOW) then
                 return keepLow()
-            elseif (v2 == HIGH) then
+            elseif (v2 == DiceParser.HIGH) then
                 return keepHigh()
 
             -- Add
@@ -61,9 +69,9 @@ function Dice:new(notation)
             print("-----subtract", v1, v2)
 
             -- Throw Low or High
-            if (v2 == LOW) then
+            if (v2 == DiceParser.LOW) then
                 return throwLow()
-            elseif (v2 == HIGH) then
+            elseif (v2 == DiceParser.HIGH) then
                 return throwHigh()
                 
             -- Subtract
@@ -180,10 +188,10 @@ function Dice:new(notation)
         -- Grammar
         local V = lpeg.V
         G = lpeg.P { "Exp",
-            Exp = lpeg.Cf(V"Factor" * lpeg.Cg(FactorOp * V"Factor")^0, eval);
-            Factor = lpeg.Cf(V"Term" * lpeg.Cg(TermOp * V"Term")^0, eval);
-            Term = lpeg.Cf(V"Dice" * lpeg.Cg(DiceOp * V"Dice")^0, eval);
-            Dice = Number / tonumber + Low + High + Open * V"Exp" * Close;
+            Exp = lpeg.Cf(V"Factor" * lpeg.Cg(DiceParser.FactorOp * V"Factor")^0, eval);
+            Factor = lpeg.Cf(V"Term" * lpeg.Cg(DiceParser.TermOp * V"Term")^0, eval);
+            Term = lpeg.Cf(V"Dice" * lpeg.Cg(DiceParser.DiceOp * V"Dice")^0, eval);
+            Dice = DiceParser.Number / tonumber + DiceParser.Low + DiceParser.High + DiceParser.Open * V"Exp" * DiceParser.Close;
         }
 
         return lpeg.match( G, dice.notation )
@@ -207,6 +215,7 @@ function Dice:new(notation)
 
         ----------------------------------------------------------------------
         -- Tests
+        -- @@@@@ TODO: Find a nice Lua unit-test framework
         v = 20; dice.notation = "1d20"; assert(dice:parse() == v, "{test #1} error: " .. v); print("{test #1} passed")
         -- @@@@@ TODO: Would like to get this working
         --v = 10; dice.notation = "d10"; assert(dice:parse() == v, "{test #2} error: " .. v); print("{test #2} passed")
@@ -223,4 +232,5 @@ function Dice:new(notation)
 
     return dice
 end
-return Dice
+
+return DiceParser

@@ -1,14 +1,11 @@
-require("DiceSelect")
-require("Dice")
+require("scripts.DiceSelect")
+require("scripts.DiceParser")
+require("scripts.RollStandard")
 
 display.setStatusBar(display.HiddenStatusBar)
 
-local bg = display.newImage("background.png", true)
-bg.x = display.contentWidth / 2
-bg.y = display.contentHeight / 2
-
 local ds1 = DiceSelect:new(display.contentCenterX, 100)
---local ds2 = DiceSelect:new(display.contentCenterX, 600)
 
-local d1 = Dice:new("4d6")
+-- @@@@@ Just for testing right now...
+local d1 = DiceParser:new("4d6")
 d1:test()
