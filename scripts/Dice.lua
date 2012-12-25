@@ -26,17 +26,19 @@ Dice.shape = { -36,-36, 36,-36, 36,36, -36,36 }
 
 function Dice:new(x, y, side)
     local dice = display.newSprite(Dice.sheet, Dice.sequence)
-    dice.selected = false -- Initial create sends an extra "tap" event
-                          -- to the dice.  Soooooo, a bit of a bug here,
-                          -- in that the dice is set initially to NOT being
-                          -- selected, however, the extra "tap" WILL select it.
+    dice.selected = false  -- Initial create sends an extra "tap" event
+                           -- to the dice.  Soooooo, a bit of a bug here,
+                           -- in that the dice is set initially to NOT being
+                           -- selected, however, the extra "tap" WILL select it.
+
+    dice.recycle = false -- recycle dice status flag 
     dice:setSequence("diceFinal")
     if (side) then
         dice:setFrame(side)
     else
         dice:setFrame(math.random (6))
     end
-    dice.rotation = math.random( 1, 360 )
+    dice.rotation = math.random(1, 360)
     dice:translate(x, y)
     dice.xScale = 0.5; dice.yScale = 0.5
     transition.to(dice, { time=500, xScale=1.0, yScale=1.0, transition=easingx.easeOutElastic })        
@@ -67,6 +69,15 @@ function Dice:new(x, y, side)
         else
             dice:setFillColor(255, 255, 255)
         end
+    end
+
+    --------------------------------------------------------------------------
+    -- recycle flag
+    function dice:setRecycle(r)
+        dice.recycle = r
+    end
+    function dice:isRecycle()
+        return dice.recycle
     end
 
     --------------------------------------------------------------------------

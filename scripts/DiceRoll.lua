@@ -2,13 +2,14 @@
 -- Dragon Dice
 -- Copyright (c) 2012 by Phil Callister. All Rights Reserved.
 --
--- RollStandard.lua => Roll on devices that don't support multi-touch.
+-- DiceRoll.lua => Roll the dice.
 --
 require("scripts.corona.wall")
 local gameUI = require("scripts.corona.gameUI")
 local dice = require("scripts.Dice")
 local physics = require("physics")
 local widget = require("widget")
+
 
 local bg = display.newImage("images/background.png", true)
 bg.x = display.contentWidth / 2
@@ -21,6 +22,7 @@ local popSound = audio.loadSound("audio/pop.wav")
 
 -- current dice on display
 local diceAll = {}
+local recycle = nil
 
 -- add walls so dice can bounce
 local walls = display.newGroup()
@@ -36,8 +38,8 @@ local function releaseRollButton()
         local d = diceAll[i]
         -- start each dice rolling if selected
         if(d:isSelected()) then
-            local vx = math.random(-1000, 1000)
-            local vy = math.random(-1000, 1000)
+            local vx = math.random(-4000, 4000)
+            local vy = math.random(-4000, 4000)
             d:setLinearVelocity(vx, vy)
             d:rollSequence()                      
             d:play()
@@ -64,9 +66,65 @@ local function newRollDice(label, selected, x, y)
 end
 newRollDice("Roll Dice", false, display.contentCenterX, 900)
 
+--------------------------------------------------------------------------
+-- Recycle dice
+local function recycleDice(x, y)
+    recycle = display.newImage("images/recycle.png", true)
+    recycle.x = x
+    recycle.y = y
+end
+recycleDice(display.contentCenterX, display.contentCenterY)
+
+------------------------------------------------------------------------------
+-- point x1, y1 within x2 + radius, y2 + radius? 
+local function hitTest(x1, y1, x2, y2, radius)
+    if ((x1 > x2 - radius and x1 < x2 + radius) and
+        (y1 > y2 - radius and y1 < y2 + radius)) then
+        return true
+    end
+    return false
+end
+
 ------------------------------------------------------------------------------
 -- drag the dice around
 local function dragDice(event)
+    local dice = event.target
+    local phase = event.phase
+    if (phase == "began") then
+        if (hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50)) then
+            dice:setRecycle(true)
+        else
+            dice:setRecycle(false)
+        end
+    elseif (phase == "moved") then
+        if ( not hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50)) then
+            dice:setRecycle(false)
+        end
+    elseif (phase == "ended") then
+        -- recycle the dice
+        if (hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50) and
+            dice:isRecycle() == false) then
+            for i = 1, #diceAll do
+                if (dice == diceAll[i]) then
+                    -- animate recycler
+                    recycle.rotation = 0
+                    transition.to( recycle, { time=1000, rotation=-360 } )
+                    -- animate dice
+                    transition.to(dice, { time=1000, xScale=0.0, yScale=0.0 })        
+                    -- dice gone!
+                    dice:removeSelf()
+                    table.remove(diceAll, i)
+                end
+            end
+        elseif (dice:isSelected()) then
+            local vx, vy = dice:getLinearVelocity()
+            -- start the roll
+            if (math.abs(vx) > 400 or math.abs(vy) > 400) then
+                dice:rollSequence()
+                dice:play()
+            end
+        end
+    end
     return gameUI.dragBody(event)
 end
 
@@ -105,6 +163,7 @@ local function enterFrame( event )
             if (math.abs(vx) < 50 and math.abs(vy) < 50) then
                 d:finalSequence()                      
                 d:setFrame(math.random (6))
+                d.rotation = math.random(1, 360)
                 d:pause()
             end
         end
