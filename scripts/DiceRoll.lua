@@ -6,10 +6,12 @@
 --
 require("scripts.corona.wall")
 local gameUI = require("scripts.corona.gameUI")
-local dice = require("scripts.Dice")
 local physics = require("physics")
 local widget = require("widget")
 
+local dice = require("scripts.dice.Dice")
+require("scripts.dice.Dice4")
+require("scripts.dice.Dice6")
 
 local bg = display.newImage("images/background.png", true)
 bg.x = display.contentWidth / 2
@@ -76,10 +78,10 @@ end
 recycleDice(display.contentCenterX, display.contentCenterY)
 
 ------------------------------------------------------------------------------
--- point x1, y1 within x2 + radius, y2 + radius? 
-local function hitTest(x1, y1, x2, y2, radius)
-    if ((x1 > x2 - radius and x1 < x2 + radius) and
-        (y1 > y2 - radius and y1 < y2 + radius)) then
+-- point x1, y1 within x2 + length, y2 + length? 
+local function hitTest(x1, y1, x2, y2, length)
+    if ((x1 > x2 - length and x1 < x2 + length) and
+        (y1 > y2 - length and y1 < y2 + length)) then
         return true
     end
     return false
@@ -92,13 +94,13 @@ local function dragDice(event)
     local phase = event.phase
     if (phase == "began") then
         if (hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50)) then
-            dice:setRecycle(true)
+            dice:setRecycle(true) -- already in recycle area. can't recycle until moved out
         else
-            dice:setRecycle(false)
+            dice:setRecycle(false) -- out of recycle area. ready to recycle
         end
     elseif (phase == "moved") then
         if ( not hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50)) then
-            dice:setRecycle(false)
+            dice:setRecycle(false) -- move was outside recycle area
         end
     elseif (phase == "ended") then
         -- recycle the dice
@@ -142,7 +144,16 @@ end
 local function touchDisplay(event)    
     if (event.phase == "ended") then
         -- add new dice
-        local d = dice:new(event.x, event.y)
+        -- @@@@@ TODO: for now just random on available dice
+        local i = math.random(1,2)
+        local t = nil
+        if (i == 1) then
+            t = Dice4
+        else
+            t = Dice6
+        end
+        local d = dice:new(event.x, event.y, t)
+
         d:addEventListener("touch", dragDice)
         d:addEventListener("tap", tapDice)
         table.insert(diceAll, d)
@@ -162,7 +173,7 @@ local function enterFrame( event )
             local vx, vy = d:getLinearVelocity()
             if (math.abs(vx) < 50 and math.abs(vy) < 50) then
                 d:finalSequence()                      
-                d:setFrame(math.random (6))
+                d:setFrame(math.random (d.sides))
                 d.rotation = math.random(1, 360)
                 d:pause()
             end
