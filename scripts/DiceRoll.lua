@@ -44,7 +44,7 @@ local function releaseRollButton()
             local vy = math.random(-4000, 4000)
             d:setLinearVelocity(vx, vy)
             d:rollSequence()                      
-            d:play()
+            d.sprite:play()
         end
     end
     return true
@@ -59,7 +59,7 @@ local function newRollDice(label, selected, x, y)
         label = label,
         labelColor = selected 
             and { default={ 217, 217, 217 }, over={ 217, 217, 217, 255 } } 
-            or { default={ 255, 255, 255, 255 }, over={ 217, 217, 217, 255 } } ,
+            or { default={ 255, 255, 255, 255 }, over={ 217, 217, 217, 255 } },
         fontSize = 36
     }
     button.x = x
@@ -72,8 +72,7 @@ newRollDice("Roll Dice", false, display.contentCenterX, 900)
 -- Recycle dice
 local function recycleDice(x, y)
     recycle = display.newImage("images/recycle.png", true)
-    recycle.x = x
-    recycle.y = y
+    recycle.x = x; recycle.y = y
 end
 recycleDice(display.contentCenterX, display.contentCenterY)
 
@@ -90,40 +89,38 @@ end
 ------------------------------------------------------------------------------
 -- drag the dice around
 local function dragDice(event)
-    local dice = event.target
+    local d = event.target
     local phase = event.phase
     if (phase == "began") then
-        if (hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50)) then
-            dice:setRecycle(true) -- already in recycle area. can't recycle until moved out
+        if (hitTest(d.x, d.y, display.contentCenterX, display.contentCenterY, 50)) then
+            d:setRecycle(true) -- already in recycle area. can't recycle until moved out
         else
-            dice:setRecycle(false) -- out of recycle area. ready to recycle
+            d:setRecycle(false) -- out of recycle area. ready to recycle
         end
     elseif (phase == "moved") then
-        if ( not hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50)) then
-            dice:setRecycle(false) -- move was outside recycle area
+        if ( not hitTest(d.x, d.y, display.contentCenterX, display.contentCenterY, 50)) then
+            d:setRecycle(false) -- move was outside recycle area
         end
     elseif (phase == "ended") then
         -- recycle the dice
-        if (hitTest(dice.x, dice.y, display.contentCenterX, display.contentCenterY, 50) and
-            dice:isRecycle() == false) then
+        if (hitTest(d.x, d.y, display.contentCenterX, display.contentCenterY, 50) and
+            d:isRecycle() == false) then
             for i = 1, #diceAll do
-                if (dice == diceAll[i]) then
+                if (d == diceAll[i]) then
                     -- animate recycler
                     recycle.rotation = 0
                     transition.to( recycle, { time=1000, rotation=-360 } )
-                    -- animate dice
-                    transition.to(dice, { time=1000, xScale=0.0, yScale=0.0 })        
                     -- dice gone!
-                    dice:removeSelf()
+                    d:removeSelf() -- @@@@@ Remove goodies on dice first??
                     table.remove(diceAll, i)
                 end
             end
-        elseif (dice:isSelected()) then
-            local vx, vy = dice:getLinearVelocity()
+        elseif (d:isSelected()) then
+            local vx, vy = d:getLinearVelocity()
             -- start the roll
             if (math.abs(vx) > 400 or math.abs(vy) > 400) then
-                dice:rollSequence()
-                dice:play()
+                d:rollSequence()
+                d.sprite:play()
             end
         end
     end
@@ -133,8 +130,8 @@ end
 ------------------------------------------------------------------------------
 -- tapped dice -- toggle dice selection
 local function tapDice(event)
-    local dice = event.target
-    dice:toggleSelect()
+    local d = event.target
+    d:toggleSelect()
     audio.play(popSound)
     return true
 end
@@ -169,13 +166,13 @@ end
 local function enterFrame( event )
     for i = 1, #diceAll do
         local d = diceAll[i]
-        if (d.isPlaying) then
+        if (d.sprite.isPlaying) then
             local vx, vy = d:getLinearVelocity()
             if (math.abs(vx) < 50 and math.abs(vy) < 50) then
                 d:finalSequence()                      
-                d:setFrame(math.random (d.sides))
-                d.rotation = math.random(1, 360)
-                d:pause()
+                d.sprite:setFrame(math.random (d.sides))
+                d.sprite.rotation = math.random(d.randomRotation[1], d.randomRotation[2])
+                d.sprite:pause()
             end
         end
     end

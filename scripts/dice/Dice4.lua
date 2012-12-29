@@ -13,6 +13,8 @@ Dice4.options = {
 }
 Dice4.sheet = graphics.newImageSheet( "sprites/d4/sprite.png", Dice4.options )
 --Dice6.shape = { -36,-36, 36,-36, 36,36, -36,36 }
+Dice4.selectColor = {8, 194, 255}
+Dice4.randomRotation = {0, 0}
 Dice4.sides = 4
 
 return Dice4
