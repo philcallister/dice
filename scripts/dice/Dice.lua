@@ -10,24 +10,26 @@ local widget = require("widget")
 
 Dice = {}
 
+
 --------------------------------------------------------------------------
 -- Private Methods
 --------------------------------------------------------------------------
-local function releaseDeleteButton(event)
+local function _releaseDeleteButton(event)
     print(">>>>> releaseDeleteButton")
 end
 
-local function newDeleteButton(x, y)
+local function _newDeleteButton(x, y)
     local button = widget.newButton
     {
         default = "images/dice-delete.png",
         over = "images/dice-delete-over.png",
-        onRelease = releaseDeleteButton
+        onRelease = _releaseDeleteButton
     }
     button.x = x
     button.y = y
     return button
 end
+
 
 --------------------------------------------------------------------------
 -- Public Class Interface
@@ -59,8 +61,7 @@ function Dice:new(x, y, diceType)
     physics.addBody(dice, { density=0.2, friction=0.3, bounce=0.1, shape=diceType.shape })
     dice.linearDamping = 3
     dice.angularDamping = 5
-    local deleteButton = newDeleteButton(40, 40)
-    dice:insert(deleteButton)
+
 
     --------------------------------------------------------------------------
     -- Public Dice Interface

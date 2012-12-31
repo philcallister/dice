@@ -12,6 +12,8 @@ Dice6.options = {
     sheetContentHeight = 130 -- 130 (65)
 }
 Dice6.sheet = graphics.newImageSheet( "sprites/d6/sprite.png", Dice6.options )
+Dice6.image = "sprites/d6/image.png"
+Dice6.over = "sprites/d6/over.png"
 Dice6.shape = { -36,-36, 36,-36, 36,36, -36,36 }
 Dice6.selectColor = {255, 59, 20}
 Dice6.randomRotation = {1, 360}

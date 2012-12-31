@@ -1,6 +1,6 @@
 require("scripts.DiceSelect")
 require("scripts.DiceParser")
-require("scripts.DiceRoll")
+require("scripts.DiceLayout")
 
 display.setStatusBar(display.HiddenStatusBar)
 
