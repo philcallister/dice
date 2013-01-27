@@ -1,6 +1,6 @@
 Dice6 = {}
 
-Dice6.sequence = { {name="diceRoll", start=1, count=24, time=500},
+Dice6.sequence = { {name="diceRoll", start=1, count=24, time=1500},
                    {name="diceFinal", start=25, count=6, time=0} }
 Dice6.options = {
     -- Required params

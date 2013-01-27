@@ -56,8 +56,6 @@ function Dice:new(x, y, diceType)
     dice.sprite.rotation = math.random(dice.randomRotation[1], dice.randomRotation[2])
     dice:insert(dice.sprite)
 
-    dice.xScale = 0.5; dice.yScale = 0.5
-    transition.to(dice, { time=500, xScale=1.0, yScale=1.0, transition=easingx.easeOutElastic })        
     physics.addBody(dice, { density=0.2, friction=0.3, bounce=0.1, shape=diceType.shape })
     dice.linearDamping = 3
     dice.angularDamping = 5

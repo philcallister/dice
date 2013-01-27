@@ -6,6 +6,7 @@
 --
 require("scripts.corona.wall")
 local gameUI = require("scripts.corona.gameUI")
+local easingx  = require("scripts.corona.easingx")
 local physics = require("physics")
 local widget = require("widget")
 
@@ -13,6 +14,7 @@ local dice = require("scripts.dice.Dice")
 require("scripts.dice.Dice4")
 require("scripts.dice.Dice6")
 local dicePicker = require("scripts.DicePicker")
+local diceDropper = require("scripts.diceDropper")
 
 local bg = display.newImage("images/background.png", true)
 bg.x = display.contentWidth / 2
@@ -26,6 +28,8 @@ local popSound = audio.loadSound("audio/pop.wav")
 -- current dice on display
 local diceAll = {}
 local recycle = nil
+local dropper = nil
+local picker = nil
 
 -- add walls so dice can bounce
 local walls = display.newGroup()
@@ -45,11 +49,14 @@ local function _releaseRollButton()
             local vy = math.random(-4000, 4000)
             d:setLinearVelocity(vx, vy)
             d:rollSequence()                      
+            d.xScale = math.random(); d.yScale = math.random()
+            transition.to(d, { time=2500, xScale=1.0, yScale=1.0, transition=easingx.easeOutElastic })        
             d.sprite:play()
         end
     end
     return true
 end
+
 local function _newRollDice(label, selected, x, y)
     local button = widget.newButton
     {
@@ -77,52 +84,60 @@ end
 _recycleDice(display.contentCenterX, display.contentCenterY)
 
 ------------------------------------------------------------------------------
--- point x1, y1 within x2 + length, y2 + length? 
-local function _hitTest(x1, y1, x2, y2, length)
-    if ((x1 > x2 - length and x1 < x2 + length) and
-        (y1 > y2 - length and y1 < y2 + length)) then
-        return true
-    end
-    return false
+-- point source within target - tolerance? 
+local function _hitTest(sourceX, sourceY, target, tolerance)
+    return (((sourceX > target.x - (target.width / 2 - tolerance) and sourceX < target.x + (target.width / 2 - tolerance)) and
+             (sourceY > target.y - (target.height / 2 - tolerance) and sourceY < target.y + (target.height / 2 - tolerance))))
 end
 
 ------------------------------------------------------------------------------
 -- drag the dice around
+local function _dragDiceEnded(d)
+    dropper:disableDrop()
+    local vx, vy = d:getLinearVelocity()
+
+    -- recycle the dice
+    if (_hitTest(d.x, d.y, recycle, 30) and
+        d:isRecycle() == false) then
+        for i = 1, #diceAll do
+            if (d == diceAll[i]) then
+                -- animate recycler
+                recycle.rotation = 0
+                transition.to( recycle, { time=1000, rotation=-360 } )
+                -- dice gone!
+                d:removeSelf() -- @@@@@ Remove goodies on dice first??
+                table.remove(diceAll, i)
+            end
+        end
+
+    -- dropped in the dropper
+    elseif (_hitTest(d.x, d.y, dropper, 30)) then
+        dropper:addDice(d)
+
+    -- start the roll
+    elseif (d:isSelected() and 
+           (math.abs(vx) > 400 or math.abs(vy) > 400)) then
+        d:rollSequence()
+        d.sprite:play()
+    end
+end
+
 local function _dragDice(event)
     local d = event.target
     local phase = event.phase
     if (phase == "began") then
-        if (_hitTest(d.x, d.y, display.contentCenterX, display.contentCenterY, 50)) then
+        dropper:enableDrop()
+        if (_hitTest(d.x, d.y, recycle, 30)) then
             d:setRecycle(true) -- already in recycle area. can't recycle until moved out
         else
             d:setRecycle(false) -- out of recycle area. ready to recycle
         end
     elseif (phase == "moved") then
-        if ( not _hitTest(d.x, d.y, display.contentCenterX, display.contentCenterY, 50)) then
+        if ( not _hitTest(d.x, d.y, recycle, 30)) then
             d:setRecycle(false) -- move was outside recycle area
         end
     elseif (phase == "ended") then
-        -- recycle the dice
-        if (_hitTest(d.x, d.y, display.contentCenterX, display.contentCenterY, 50) and
-            d:isRecycle() == false) then
-            for i = 1, #diceAll do
-                if (d == diceAll[i]) then
-                    -- animate recycler
-                    recycle.rotation = 0
-                    transition.to( recycle, { time=1000, rotation=-360 } )
-                    -- dice gone!
-                    d:removeSelf() -- @@@@@ Remove goodies on dice first??
-                    table.remove(diceAll, i)
-                end
-            end
-        elseif (d:isSelected()) then
-            local vx, vy = d:getLinearVelocity()
-            -- start the roll
-            if (math.abs(vx) > 400 or math.abs(vy) > 400) then
-                d:rollSequence()
-                d.sprite:play()
-            end
-        end
+        _dragDiceEnded(d)
     end
     return gameUI.dragBody(event)
 end
@@ -196,7 +211,8 @@ local newDice = function (d)
     d:rollSequence()
     d.sprite:play()
 end
-local picker = dicePicker:new(display.viewableContentWidth, 100, newDice)
+picker = dicePicker:new(display.viewableContentWidth, 100, newDice)
+dropper = diceDropper:new(10, 175, nil)
 
 Runtime:addEventListener("enterFrame", _enterFrame)
 --Runtime:addEventListener("touch", _touchDisplay)

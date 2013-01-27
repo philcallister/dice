@@ -30,12 +30,13 @@ local function _newDicePickButton(x, y, type, newDice)
     {
         default = type.image,
         over = type.over,
-        onRelease = _releaseDicePickButton,
+        onRelease = _releaseDicePickButton
     }
     button.x = x
     button.y = y
     button.type = type
     button.newDice = newDice
+
     return button
 end
 
@@ -55,7 +56,7 @@ function DicePicker:new(x, y, newDice)
 
 
     --------------------------------------------------------------------------
-    -- Public Dice Interface
+    -- Public Interface
     --------------------------------------------------------------------------
 
     --------------------------------------------------------------------------
